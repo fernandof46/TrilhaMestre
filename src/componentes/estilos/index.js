@@ -1618,4 +1618,207 @@ export const estilos = StyleSheet.create({
     height: 8,
     borderRadius: 2,
   },
+   // Caixa principal com proporção 16:9 que abriga o gráfico
+  graficoContainer: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: cores.bksecundario,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: cores.bordaInput,
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+
+  // Linha horizontal centralizada com os itens da legenda
+  graficoLegendaLinha: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+
+  graficoLegendaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+
+  // Marcador quadrado/pílula de cor da legenda
+  graficoLegendaPonto: {
+    width: 8,
+    height: 8,
+    borderRadius: 2,
+  },
+  // =========================================================================
+  // ESTILOS DO MENU DE COMANDOS (MenuDeComandos)
+  // Caixa de pesquisa rápida de ações, trilhas e comandos no estilo Spotlight/F1
+  // =========================================================================
+
+  menuComandosContainer: {
+    width: '100%',
+    backgroundColor: cores.bksecundario,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: cores.bordaInput,
+    overflow: 'hidden',
+  },
+
+  menuComandosLinhaEntrada: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: cores.bordaInput,
+    paddingHorizontal: 14,
+    height: 50,
+  },
+
+  menuComandosCampoTexto: {
+    flex: 1,
+    fontSize: 14,
+    color: cores.titulos,
+    marginLeft: 10,
+  },
+
+  menuComandosLista: {
+    maxHeight: 280,
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+  },
+
+  menuComandosTituloGrupo: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: cores.descricao,
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+
+  menuComandosItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    gap: 10,
+  },
+
+  menuComandosSeparador: {
+    height: 1,
+    backgroundColor: cores.bordaInput,
+    marginVertical: 4,
+  },
+  // =========================================================================
+  // ESTILOS DO MENU CONTEXTUAL (MenuContextual)
+  // Painel de opções acionado ao pressionar e segurar um elemento na tela
+  // =========================================================================
+
+  menuContextualCartao: {
+    backgroundColor: cores.bksecundario,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: cores.bordaInput,
+    padding: 6,
+    minWidth: 220,
+    maxWidth: 280,
+  },
+
+  menuContextualItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 10,
+  },
+
+  menuContextualRotulo: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: cores.descricao,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  // =========================================================================
+  // ESTILOS DA JANELA MODAL (JanelaModal / Dialog)
+  // Caixa flutuante centralizada com botão de fechar e fundo escuro
+  // =========================================================================
+
+  janelaModalCartao: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: cores.bksecundario,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: cores.bordaInput,
+    padding: 20,
+    position: 'relative',
+  },
+
+  janelaModalBotaoFechar: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    zIndex: 10,
+    padding: 4,
+  },
+
+  // =========================================================================
+  // ESTILOS DA BARRA DE MENUS (BarraDeMenus)
+  // =========================================================================
+
+  barraMenusRolagem: {
+    width: '100%',
+  },
+
+  barraMenusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+  },
+
+  barraMenusBotaoInativo: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: cores.bksecundario,
+    borderWidth: 1,
+    borderColor: cores.bordaInput,
+  },
+
+  barraMenusBotaoAtivo: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 161, 156, 0.2)',
+    borderWidth: 1,
+    borderColor: cores.confirmar,
+  },
+
+  barraMenusTextoInativo: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: cores.textoComum,
+  },
+
+  barraMenusTextoAtivo: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: cores.confirmar,
+  },
+
+  barraMenusEspacoIcone: {
+    width: 16,
+  },
+  
 });

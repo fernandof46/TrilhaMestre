@@ -16,7 +16,7 @@
  * ============================================================================
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Animated } from 'react-native';
 import { estilos } from './estilos';
 
@@ -35,7 +35,7 @@ import { estilos } from './estilos';
  */
 export function EsqueletoCarregamento({ estiloPersonalizado, children, ...outrasPropriedades }) {
   // Valor animado que oscila a transparência do elemento
-  const opacidadeAnimada = useRef(new Animated.Value(0.3)).current;
+  const [opacidadeAnimada] = useState(() => new Animated.Value(0.3));
 
   useEffect(() => {
     // Configura o ciclo contínuo de pulso (fade-in e fade-out)

@@ -18,7 +18,7 @@ function formatarDataBrasil(dataIso) {
       month: 'short',
       year: 'numeric',
     });
-  } catch (erro) {
+  } catch {
     return '';
   }
 }

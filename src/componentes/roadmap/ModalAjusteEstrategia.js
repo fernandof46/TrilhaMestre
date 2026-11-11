@@ -107,6 +107,7 @@ export default function ModalAjusteEstrategia({
       setNotaSucesso(resultadoRevisado?.adaptation_note || 'Estratégia recalculada com sucesso!');
       setTextoFeedback('');
     } catch (erro) {
+      console.error('Falha ao ajustar estratégia:', erro);
       setMensagemErro('Não conseguimos ajustar a trilha agora. Tente novamente em alguns instantes.');
     } finally {
       setCarregando(false);

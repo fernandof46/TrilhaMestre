@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -47,7 +47,7 @@ export default function ModalQuestionarioModulo({
   /**
    * Dispara a geração de novas questões via IA
    */
-  const iniciarNovoQuestionario = async () => {
+  const iniciarNovoQuestionario = useCallback(async () => {
     setCarregando(true);
     setMensagemErro('');
     setRespostas({});
@@ -59,34 +59,28 @@ export default function ModalQuestionarioModulo({
       if (funcaoGerarPerguntas) {
         questoesGeradas = await funcaoGerarPerguntas({ trilha, modulo });
       } else {
-        // Mock defensivo caso a função da IA não seja fornecida
-        questoesGeradas = [
-          {
-            question: 'Qual o principal conceito ensinado neste módulo?',
-            options: ['Conceito A', 'Conceito B', 'Conceito C', 'Conceito D'],
-            correct_index: 0,
-            explanation: 'O Conceito A fundamenta a base de toda a arquitetura desta etapa.',
-          },
-        ];
+        throw new Error('O serviço de geração de questionários não está configurado.');
       }
 
       setQuestoes(questoesGeradas);
     } catch (erro) {
-      setMensagemErro('Não conseguimos gerar o checkpoint agora. Tente novamente.');
+      console.error('Falha ao gerar questionário:', erro);
+      setMensagemErro(erro instanceof Error ? erro.message : 'Não conseguimos gerar o checkpoint agora.');
     } finally {
       setCarregando(false);
     }
-  };
+  }, [funcaoGerarPerguntas, modulo, trilha]);
 
   /**
    * Recarrega o quiz sempre que o modal for aberto para um novo módulo
    */
   useEffect(() => {
-    if (visivel && modulo) {
-      setQuestoes([]);
-      iniciarNovoQuestionario();
-    }
-  }, [visivel, indiceModulo]);
+    if (!visivel || !modulo) return undefined;
+    const temporizador = setTimeout(() => {
+      void iniciarNovoQuestionario();
+    }, 0);
+    return () => clearTimeout(temporizador);
+  }, [visivel, indiceModulo, iniciarNovoQuestionario, modulo]);
 
   // Contagem de quantas perguntas já foram respondidas pelo usuário
   const totalRespondidas = Object.keys(respostas).length;
@@ -133,6 +127,7 @@ export default function ModalQuestionarioModulo({
         });
       }
     } catch (erro) {
+      console.error('Falha ao salvar resultado do questionário:', erro);
       setMensagemErro('Não conseguimos salvar seu resultado. Tente novamente.');
     } finally {
       setSalvando(false);

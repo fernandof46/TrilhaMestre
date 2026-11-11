@@ -60,7 +60,7 @@ export default function LinhaEtapa({
       } else {
         Alert.alert('Aviso', 'Não foi possível abrir o link solicitado.');
       }
-    } catch (erro) {
+    } catch {
       Alert.alert('Erro', 'Ocorreu uma falha ao tentar abrir o recurso.');
     }
   };

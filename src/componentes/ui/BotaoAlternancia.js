@@ -18,9 +18,8 @@
  */
 
 import React from 'react';
-import { TouchableOpacity, Text } from 'react-//native';
+import { TouchableOpacity, Text } from 'react-native';
 import { estilos } from './estilos';
-import { cores } from './cores';
 
 /**
  * COMPONENTE: BotaoAlternancia
@@ -36,8 +35,6 @@ import { cores } from './cores';
  * @param {object} estiloPersonalizado - Estilo extra vindo de estilos/index.js.
  */
 export function BotaoAlternancia({
-  ativ도, // Traduzido de 'active/checked'
-  // Mantivemos a lógica de 'ativado' para consistência com o projeto
   ativado = false, 
   aoAlternar,
   variante = 'default',
@@ -48,21 +45,21 @@ export function BotaoAlternancia({
   
   // Seleciona o estilo de fundo com base no estado ativo e variante
   // Reaproveita: grupoEscolhaBotaoAtivo para o estado ON e grupoEscolhaBotaoInativo para o OFF
-  const estiloFundo = ativado 
-    ? estilos.grupoEscolhaBotaoAtivo 
-    : (variante === 'outline' ? estilos.grupoEscolhaBotaoInativo : { backgroundColor: 'transparent' });
+  const estiloFundo = ativado
+    ? estilos.botaoPrimario
+    : variante === 'outline'
+      ? estilos.botaoSecundario
+      : { backgroundColor: 'transparent' };
 
   // Define o estilo do texto baseado no estado ativo
-  const estiloTexto = ativado 
-    ? estilos.grupoEscolhaTextoAtivo 
-    : estilos.textoComum;
+  const estiloTexto = ativado ? estilos.textoAtivoForte : estilos.textoComum;
 
   return (
     <TouchableOpacity
       onPress={aoAlternar}
       activeOpacity={0.7}
       style={[
-        estilos.botaoGenericoBase,
+        tamanho === 'lg' ? estilos.botaoPrimario : estilos.botaoCompacto,
         estiloFundo,
         estiloPersonalizado,
       ]}
@@ -83,6 +80,6 @@ export function BotaoAlternancia({
   );
 }
 
-// Aliases em inglês para manter 100% de compatibilidade com imports legados
+// Mantém o nome usado por componentes nativos que já dependem deste controle.
 export const Toggle = BotaoAlternancia;
 export default BotaoAlternancia;

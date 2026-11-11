@@ -3,22 +3,37 @@
     "name": "TrilhaMestre",
     "slug": "TrilhaMestre",
     "version": "1.0.0",
+    "description": "Receba orientação de aprendizagem em qualquer área, acompanhe seu progresso e estude no seu ritmo.",
+    "platforms": [
+      "android",
+      "ios"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "scheme": "trilhamestre",
+    "userInterfaceStyle": "dark",
     "ios": {
+      "bundleIdentifier": "com.fernandobf.TrilhaMestre",
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "backgroundColor": "#0C0B0E",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "package": "com.fernandobf.TrilhaMestre"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-sharing",
+      "expo-font"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2671525d-d089-4ff4-b3b7-06a78e49da10"
+      }
     }
   }
 }

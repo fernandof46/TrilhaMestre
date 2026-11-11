@@ -66,7 +66,7 @@ export default function ChatTutorEtapa({
   /**
    * Envia uma pergunta para o Tutor de IA e anexa a resposta na lista
    */
-  const enviarPerguntaParaTutor = async (pergunta, historicoAtual) => {
+  const enviarPerguntaParaTutor = useCallback(async (pergunta, historicoAtual) => {
     const mensagemUsuario = {
       papel: 'usuario',
       conteudo: pergunta,
@@ -91,7 +91,7 @@ export default function ChatTutorEtapa({
           pergunta,
         });
       } else {
-        respostaTutor = 'Compreendido! Comece revisando o primeiro conceito desta etapa e faça os testes práticos.';
+        throw new Error('O serviço do tutor não está configurado neste projeto.');
       }
 
       const mensagemAssistente = {
@@ -102,12 +102,13 @@ export default function ChatTutorEtapa({
 
       setMensagens((atual) => [...atual, mensagemAssistente]);
     } catch (erro) {
-      setMensagemErro('Não foi possível conectar com o tutor agora. Tente reenviar.');
+      console.error('Falha ao consultar o tutor:', erro);
+      setMensagemErro(erro instanceof Error ? erro.message : 'Não foi possível consultar o tutor agora.');
     } finally {
       setCarregando(false);
       rolarParaOFinal();
     }
-  };
+  }, [etapa, funcaoConsultarIA, modulo, rolarParaOFinal, trilha]);
 
   /**
    * Inicia o chat automaticamente com a primeira explicação ao abrir a etapa
@@ -115,10 +116,11 @@ export default function ChatTutorEtapa({
   useEffect(() => {
     if (!visivel || !etapa?.key) return;
 
-    setMensagens([]);
-    setMensagemErro('');
-    enviarPerguntaParaTutor(MENSAGEM_BOAS_VINDAS_TUTOR, []);
-  }, [visivel, etapa?.key]);
+    const temporizador = setTimeout(() => {
+      void enviarPerguntaParaTutor(MENSAGEM_BOAS_VINDAS_TUTOR, []);
+    }, 0);
+    return () => clearTimeout(temporizador);
+  }, [visivel, etapa?.key, enviarPerguntaParaTutor]);
 
   /**
    * Acionador de envio via botão ou via toque em sugestão

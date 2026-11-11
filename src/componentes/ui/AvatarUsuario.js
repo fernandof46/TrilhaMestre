@@ -82,4 +82,3 @@ export function AvatarFallback({ children, style, ...props }) {
 // Aliases em inglês para manter 100% de compatibilidade
 export const Avatar = AvatarUsuario;
 export const AvatarImage = AvatarImagem;
-export const AvatarFallback = AvatarFallback;

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { estilos } from './estilos';
-import { cores } from './cores';
 
 /**
  * COMPONENTE RAIZ: BannerAlerta (Substituto do Alert visual)

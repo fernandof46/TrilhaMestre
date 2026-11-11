@@ -162,6 +162,10 @@ const resourceDatabase: Record<string, Resource[]> = {
 		{ title: 'DevDocs - Documentação Agregada', url: 'https://devdocs.io/', type: 'documentation' },
 		{ title: 'MDN Web Docs', url: 'https://developer.mozilla.org/', type: 'documentation' },
 	],
+	'aprendizado-geral': [
+		{ title: 'Khan Academy em português', url: 'https://pt.khanacademy.org/', type: 'course' },
+		{ title: 'OpenLearn - cursos gratuitos', url: 'https://www.open.edu/openlearn/', type: 'course' },
+	],
 };
 
 // Templates de roadmaps baseados em categorias
@@ -536,7 +540,7 @@ function detectCategory(topic: string, description: string): string {
 	if (text.match(/web|frontend|backend|react|javascript|html|css|node|api|site|website|aplicativo web|fullstack/)) {
 		return 'desenvolvimento-web';
 	}
-	if (text.match(/data science|dados|machine learning|ml|ia|intelig[êe]ncia artificial|python|análise|analytics|deep learning|tensorflow/)) {
+	if (text.match(/data science|ci[eê]ncia de dados|an[aá]lise de dados|machine learning|aprendizado de m[aá]quina|intelig[êe]ncia artificial|python|analytics|deep learning|tensorflow/)) {
 		return 'data-science';
 	}
 	if (text.match(/marketing|seo|tráfego|ads|anúncio|redes sociais|social media|growth|vendas|leads|funil/)) {
@@ -545,87 +549,109 @@ function detectCategory(topic: string, description: string): string {
 	if (text.match(/design|figma|ui|ux|interface|visual|gráfico|ilustra|canva|adobe/)) {
 		return 'design';
 	}
-	if (text.match(/empreend|startup|negócio|empresa|empres|mvp|produto|mercado|cliente|financ/)) {
+	if (text.match(/empreend|startup|negócio|empresa|empres|mvp|plano de negócio|gestão empresarial|finanças empresariais/)) {
 		return 'empreendedorismo';
 	}
 	
-	// Default to web development if no match
-	return 'desenvolvimento-web';
+	return 'geral';
 }
 
 function createGenericRoadmap(topic: string, description: string, level: string): RoadmapData {
+	const tema = topic.trim();
+	const objetivo = description.trim() || tema;
+	const temaCodificado = encodeURIComponent(tema);
+	const recursos = [
+		{
+			title: `Buscar materiais introdutórios sobre ${tema}`,
+			url: `https://www.google.com/search?q=${temaCodificado}+curso+introdut%C3%B3rio`,
+			type: 'course' as const,
+		},
+		{
+			title: `Buscar artigos e estudos sobre ${tema}`,
+			url: `https://scholar.google.com/scholar?q=${temaCodificado}`,
+			type: 'article' as const,
+		},
+		...resourceDatabase['aprendizado-geral'],
+	];
+	const focoPorNivel: Record<string, string> = {
+		iniciante: 'começar pelos conceitos fundamentais e avançar passo a passo',
+		intermediario: 'identificar lacunas e praticar em situações mais completas',
+		avancado: 'aprofundar tópicos específicos, comparar abordagens e buscar qualidade profissional',
+	};
+	const foco = focoPorNivel[level] || focoPorNivel.iniciante;
+
 	return {
-		title: `Roadmap: ${topic}`,
-		description: `Plano personalizado para ${description.substring(0, 100)}...`,
+		title: `Trilha: ${tema.charAt(0).toUpperCase() + tema.slice(1)}`,
+		description: `Roteiro geral para ${objetivo}. Use as etapas como guia e ajuste os materiais à sua área.`,
 		estimatedTime: level === 'iniciante' ? '6-8 meses' : level === 'intermediario' ? '4-6 meses' : '3-4 meses',
 		phases: [
 			{
 				id: 'fase-1',
-				title: 'Pesquisa e Planejamento',
-				description: 'Entenda o contexto e planeje sua jornada',
+				title: 'Ponto de partida e objetivo',
+				description: `Entenda o que você já sabe sobre ${tema} e defina um resultado concreto para: ${objetivo}.`,
 				steps: [
 					{
 						id: 'step-1-1',
-						title: 'Pesquisa Inicial',
-						description: 'Pesquise sobre o tema e identifique os principais conceitos.',
-						resources: resourceDatabase['pesquisa'],
+						title: `Mapeie os fundamentos de ${tema}`,
+						description: `Pesquise fontes confiáveis, anote os conceitos recorrentes e descubra quais conhecimentos são pré-requisitos para ${tema}.`,
+						resources: recursos,
 					},
 					{
 						id: 'step-1-2',
-						title: 'Definição de Objetivos',
-						description: 'Defina metas claras e mensuráveis para seu projeto.',
-						resources: resourceDatabase['gestao-projetos'],
+						title: 'Defina como reconhecer seu progresso',
+						description: `Divida "${objetivo}" em pequenas metas observáveis e escolha uma forma de demonstrar o que aprendeu.`,
+						resources: recursos,
 					},
 				],
 			},
 			{
 				id: 'fase-2',
-				title: 'Aprendizado dos Fundamentos',
-				description: 'Adquira os conhecimentos essenciais',
+				title: 'Fundamentos de aprendizagem',
+				description: `Organize uma sequência para ${foco} em ${tema}.`,
 				steps: [
 					{
 						id: 'step-2-1',
-						title: 'Estudo Teórico',
-						description: 'Estude os conceitos fundamentais do tema.',
-						resources: resourceDatabase['documentacao'],
+						title: `Estude os conceitos essenciais de ${tema}`,
+						description: `Escolha materiais introdutórios adequados ao seu nível, estude um conceito por vez e registre dúvidas e exemplos.`,
+						resources: recursos,
 					},
 					{
 						id: 'step-2-2',
-						title: 'Prática Inicial',
-						description: 'Comece a praticar com exercícios simples.',
-						resources: resourceDatabase['programacao-basico'],
+						title: `Organize um plano de estudo para ${tema}`,
+						description: `Separe ${tema} em tópicos menores, ordene-os do mais básico ao mais complexo e reserve momentos regulares para estudo e revisão.`,
+						resources: recursos,
 					},
 				],
 			},
 			{
 				id: 'fase-3',
-				title: 'Desenvolvimento de Habilidades',
-				description: 'Aprofunde seus conhecimentos',
+				title: 'Prática e aprofundamento',
+				description: `Aplique o que estudou em exercícios ou situações reais ligadas a ${tema}.`,
 				steps: [
 					{
 						id: 'step-3-1',
-						title: 'Projetos Práticos',
-						description: 'Desenvolva projetos para aplicar o que aprendeu.',
-						resources: resourceDatabase['gestao-projetos'],
+						title: `Pratique ${tema} em situações progressivas`,
+						description: `Comece com tarefas simples, aumente a dificuldade gradualmente e compare suas soluções com referências confiáveis.`,
+						resources: recursos,
 					},
 					{
 						id: 'step-3-2',
-						title: 'Produtividade e Organização',
-						description: 'Organize seu tempo e maximize sua produtividade.',
-						resources: resourceDatabase['produtividade'],
+						title: 'Revise e peça feedback',
+						description: `Reveja seus resultados, identifique o que ainda precisa melhorar em ${tema} e, quando possível, peça retorno a alguém com experiência na área.`,
+						resources: recursos,
 					},
 				],
 			},
 			{
 				id: 'fase-4',
-				title: 'Execução e Entrega',
-				description: 'Finalize e entregue seu projeto',
+				title: 'Aplicação e próximos passos',
+				description: `Demonstre o que desenvolveu e avalie o próximo passo em ${tema}.`,
 				steps: [
 					{
 						id: 'step-4-1',
-						title: 'Finalização do Projeto',
-						description: 'Complete todas as etapas e faça revisões finais.',
-						resources: resourceDatabase['gestao-projetos'],
+						title: `Conclua uma aplicação prática de ${tema}`,
+						description: `Produza uma entrega adequada à sua área que demonstre seu avanço em "${objetivo}" e registre o que aprendeu durante o processo.`,
+						resources: recursos,
 					},
 				],
 			},
@@ -636,7 +662,7 @@ function createGenericRoadmap(topic: string, description: string, level: string)
 export function generateRoadmap(topic: string, description: string, level: string): RoadmapData {
 	const category = detectCategory(topic, description);
 	
-	if (roadmapTemplates[category]) {
+	if (category !== 'geral' && roadmapTemplates[category]) {
 		const roadmap = roadmapTemplates[category](level, description);
 		// Personalize o título baseado no input do usuário
 		if (topic.length > 3) {

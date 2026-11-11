@@ -18,9 +18,8 @@
  * ============================================================================
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Dimensions, PixelRatio } from 'react-native';
-import { LARGURA_PADRAO_OTIMIZACAO } from '../lib/otimizadorDeImagens';
+import { useRef, useState } from 'react';
+import { PixelRatio } from 'react-native';
 
 /**
  * HOOK: useImagemResponsiva
@@ -36,28 +35,20 @@ export function useImagemResponsiva({
   focalPoint,
   qualidade,
   onLoad,
-}, referênciaPai) {
+}) {
   // Referência para o container externo (para medição de tamanho)
   const referênciaContainer = useRef(null);
   // Referência para a imagem nativa
   const referênciaImagem = useRef(null);
   
   // Estado de controle de visibilidade (True quando a foto termina de baixar)
-  const [carregado, setCarregado] = useState(false);
+  const [urlCarregada, setUrlCarregada] = useState(null);
 
   // Armazena as dimensões reais do container detectadas no aparelho
   const [dimensoes, setDimensoes] = useState({
     largura: 0,
     altura: 0,
   });
-
-  // Expõe a referência da imagem para o componente pai (compatibilidade com ref)
-  React.useImperativeHandle(referênciaPai, () => referênciaImagem.current);
-
-  // Reinicia o estado de carregamento sempre que a URL da imagem mudar
-  useEffect(() => {
-    setCarregando(false);
-  }, [parsed?.urlBase]);
 
   /**
    * Função: lidarComMudançaDeTamanho
@@ -75,7 +66,7 @@ export function useImagemResponsiva({
    * Para que serve: Sincroniza o estado de carregamento com o componente pai.
    */
   const lidarComCarga = (evento) => {
-    setCarregado(true);
+    setUrlCarregada(parsed?.urlBase || null);
     if (onLoad) onLoad(evento);
   };
 
@@ -83,11 +74,11 @@ export function useImagemResponsiva({
   const deveCortar = fittingType !== 'conter';
 
   // Monta as opções de transformação para a CDN Baseada na largura real da tela
-  const opcoesTransformacao = dimensões.largura > 0 ? {
+  const opcoesTransformacao = dimensoes.largura > 0 ? {
     // Multiplicamos a largura pelo PixelRatio (2x ou 3x) para evitar que a imagem 
     // fique serrilhada em telas Retina/AMOLED de alta densidade.
-    largura: dimensões.largura * PixelRatio.get(),
-    altura: dimensões.altura ? dimensões.altura * PixelRatio.get() : undefined,
+    largura: dimensoes.largura * PixelRatio.get(),
+    altura: dimensoes.altura ? dimensoes.altura * PixelRatio.get() : undefined,
     cortar: deveCortar,
     pontoFocal: deveCortar ? focalPoint : undefined,
     qualidade,
@@ -96,7 +87,7 @@ export function useImagemResponsiva({
   return {
     referenciaContainer: referênciaContainer,
     referenciaImagem: referênciaImagem,
-    carregado,
+    carregado: Boolean(parsed?.urlBase && urlCarregada === parsed.urlBase),
     opcoes: opcoesTransformacao,
     handleLoad: lidarComCarga,
     // Função auxiliar para disparar a medição de tamanho manualmente se necessário

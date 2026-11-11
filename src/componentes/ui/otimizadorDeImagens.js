@@ -63,7 +63,7 @@ export function validarLinkImagem(urlOrigem) {
 
     // Valida se o link aponta para uma extensão de imagem reconhecida
     return EXTENSOES_VALIDAS.test(urlFormatada.pathname);
-  } catch (erro) {
+  } catch {
     // Se a string não for uma URL válida, rejeita de forma defensiva
     return false;
   }

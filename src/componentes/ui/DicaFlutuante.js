@@ -51,7 +51,7 @@ export function DicaFlutuante({ children }) {
   return (
     <ContextoDicaFlutuante.Provider value={{ visivel, abrirDica, fecharDica }}>
       {children}
-    </ContextoH laSFlutuante.Provider>
+    </ContextoDicaFlutuante.Provider>
   );
 }
 

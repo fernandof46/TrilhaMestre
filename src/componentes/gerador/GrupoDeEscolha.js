@@ -23,10 +23,10 @@ export default function GrupoDeEscolha({
   return (
     <View style={{ width: '100%', marginBottom: 12 }}>
       {/* Exibe o rótulo superior do grupo */}
-      <Text style={styles.grupoEscolhaRotulo}>{rotulo}</Text>
+      <Text style={estilos.textoEnunciado}>{rotulo}</Text>
 
       {/* Container que envolve todas as opções disponíveis */}
-      <View style={styles.grupoEscolhaContainerOpcoes}>
+      <View style={estilos.linhaQuebra}>
         {opcoes.map((opcao) => {
           // Verifica se esta opção específica é a que está selecionada no momento
           const estaAtiva = opcao.valor === valorSelecionado;
@@ -39,19 +39,19 @@ export default function GrupoDeEscolha({
               style={[
                 // Aplica a variante de layout (card ou pílula)
                 variante === 'cards' 
-                  ? styles.grupoEscolhaVarianteCard 
-                  : styles.grupoEscolhaVariantePill,
+                  ? estilos.cartaoCompacto
+                  : estilos.botaoCompacto,
                 
                 // Aplica o estilo visual dependendo se está ativo ou inativo
                 estaAtiva 
-                  ? styles.grupoEscolhaBotaoAtivo 
-                  : styles.grupoEscolhaBotaoInativo,
+                  ? estilos.estadoAtivo
+                  : estilos.superficie,
               ]}
             >
               {/* Rótulo/Texto principal da opção */}
               <Text style={[
-                styles.grupoEscolhaRotuloOpcao, 
-                estaAtiva && styles.grupoEscolhaTextoAtivo
+                estilos.textoSecundario,
+                estaAtiva && estilos.textoAtivoDestaque
               ]}>
                 {opcao.rotulo}
               </Text>
@@ -59,8 +59,8 @@ export default function GrupoDeEscolha({
               {/* Dica secundária (exibida apenas no modo 'cards' se a opção possuir) */}
               {variante === 'cards' && opcao.dica ? (
                 <Text style={[
-                  styles.grupoEscolhaDicaOpcao, 
-                  estaAtiva && styles.grupoEscolhaTextoDicaAtivo
+                  estilos.textoApoio,
+                  estaAtiva && estilos.textoAtivoDestaque
                 ]}>
                   {opcao.dica}
                 </Text>

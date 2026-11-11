@@ -21,7 +21,7 @@
  * ============================================================================
  */
 
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { estilos } from './estilos';
@@ -52,31 +52,25 @@ export function useNotificacao() {
  */
 export function ProvedorNotificacao({ children }) {
   const [dadosAviso, setDadosAviso] = useState(null);
-  const posicaoYAnimada = useRef(new Animated.Value(-100)).current;
-  const temporizadorRef = useRef(null);
+  const [posicaoYAnimada] = useState(() => new Animated.Value(-100));
 
   /**
    * Função: fecharAviso
    * O que faz: Recolhe o banner de volta para cima da tela com animação nativa.
    */
-  const fecharAviso = () => {
+  const fecharAviso = useCallback(() => {
     Animated.timing(posicaoYAnimada, {
       toValue: -120,
       duration: 250,
       useNativeDriver: true,
     }).start(() => setDadosAviso(null));
-  };
+  }, [posicaoYAnimada]);
 
   /**
    * Função: exibirAviso
    * O que faz: Configura o texto, tipo de aviso e dispara a descida do banner.
    */
-  const exibirAviso = (titulo, mensagem, tipo = 'sucesso') => {
-    // Cancela qualquer fechamento pendente anterior
-    if (temporizadorRef.current) {
-      clearTimeout(temporizadorRef.current);
-    }
-
+  const exibirAviso = useCallback((titulo, mensagem, tipo = 'sucesso') => {
     setDadosAviso({ titulo, mensagem, tipo });
 
     // Animação de descida do topo da tela
@@ -86,11 +80,13 @@ export function ProvedorNotificacao({ children }) {
       bounciness: 4,
     }).start();
 
-    // Programa o desaparecimento automático após 3.5 segundos
-    temporizadorRef.current = setTimeout(() => {
-      fecharAviso();
-    }, 3500);
-  };
+  }, [posicaoYAnimada]);
+
+  useEffect(() => {
+    if (!dadosAviso) return undefined;
+    const temporizador = setTimeout(fecharAviso, 3500);
+    return () => clearTimeout(temporizador);
+  }, [dadosAviso, fecharAviso]);
 
   const notificarSucesso = (titulo, mensagem) => exibirAviso(titulo, mensagem, 'sucesso');
   const notificarErro = (titulo, mensagem) => exibirAviso(titulo, mensagem, 'erro');

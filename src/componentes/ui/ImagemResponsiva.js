@@ -4,8 +4,7 @@
  * 
  * FINALIDADE DO ARQUIVO:
  * Exibir imagens com proporção adaptável e efeito suave de carregamento no celular.
- * Removeu-se completamente qualquer menção a bibliotecas externas proprietárias
- * ou atributos de navegador da Web (como tags HTML <span>, <img> e blur CSS).
+ * Utiliza somente o componente Image nativo e valida links antes de carregá-los.
  * 
  * DESIGN SYSTEM (MERCEDES-AMG F1):
  * - Contêiner carbono (#1E1E1E) com cantos arredondados (cartaoGenerico).
@@ -19,7 +18,7 @@
 
 import React, { useState } from 'react';
 import { View, Image as ImagemNativa, ActivityIndicator, StyleSheet } from 'react-native';
-import { validarLinkImagem } from '../lib/otimizadorDeImagens';
+import { validarLinkImagem } from './otimizadorDeImagens';
 import { estilos } from './estilos';
 import { cores } from './cores';
 

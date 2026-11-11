@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "261476649416",
+    "project_id": "trilhamestre-fc306",
+    "storage_bucket": "trilhamestre-fc306.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:261476649416:android:693f81a405908ba2e8d8fd",
+        "android_client_info": {
+          "package_name": "com.fernandobf.TrilhaMestre"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5JNukMVkGmEhrLIYm-1ifZ3BeezPwkzY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

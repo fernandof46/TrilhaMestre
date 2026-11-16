@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { STATUS_TRILHA, useTrilhas } from '../../lib/TrilhasContext';
+import { STATUS_TRILHA, useTrilhas } from '../../contextos/TrilhasContext';
 import { estilos as e, espaco } from '../../componentes/estilos'; // Importa seu arquivo unificado de estilos globais (Design System) apelidado de 'e'
 import { cores } from '../../componentes/cores';
 

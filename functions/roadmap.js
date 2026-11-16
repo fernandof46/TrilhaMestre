@@ -1,6 +1,8 @@
 const NIVEL = new Set(['iniciante', 'intermediario', 'avancado']);
 const TIPOS_PROVEDOR = new Set(['gemini', 'groq', 'openrouter']);
 
+// Valida e normaliza a entrada antes de montar prompts ou consumir APIs externas.
+// Os limites evitam campos excessivos, enquanto o nível restrito mantém o prompt previsível.
 function validarEntrada(entrada) {
   if (!entrada || typeof entrada !== 'object') {
     throw new TypeError('Informe os dados da orientação.');
@@ -24,6 +26,8 @@ function validarEntrada(entrada) {
   return { tema, objetivo, nivel, contexto };
 }
 
+// Define um contrato único para os provedores: JSON estruturado, fases limitadas
+// e conteúdo adequado ao tema, sem depender de URLs fornecidas pelo modelo.
 function criarPrompt({ tema, objetivo, nivel, contexto }) {
   return [
     'Você é um orientador de aprendizagem. Crie um plano claro, realista e inclusivo em português brasileiro.',
@@ -39,6 +43,8 @@ function criarPrompt({ tema, objetivo, nivel, contexto }) {
   ].join('\n');
 }
 
+// Aceita JSON puro ou cercado por blocos Markdown; qualquer saída sem objeto JSON
+// é rejeitada para que a camada de normalização produza erros claros.
 function extrairJson(texto) {
   const limpo = String(texto || '')
     .trim()
@@ -50,6 +56,7 @@ function extrairJson(texto) {
   return JSON.parse(limpo.slice(inicio, fim + 1));
 }
 
+// Garante que os textos essenciais sejam strings não vazias e respeitem seus limites.
 function textoObrigatorio(valor, campo, limite) {
   if (typeof valor !== 'string' || !valor.trim() || valor.trim().length > limite) {
     throw new Error(`O campo ${campo} está ausente ou excede o limite.`);
@@ -57,6 +64,8 @@ function textoObrigatorio(valor, campo, limite) {
   return valor.trim();
 }
 
+// Converte a resposta externa ao formato estável usado pelo app. IDs são gerados
+// localmente e os links de apoio são pesquisas HTTPS, não URLs inventadas pela IA.
 function normalizarOrientacao(dados, tema) {
   if (!dados || !Array.isArray(dados.phases) || dados.phases.length < 3 || dados.phases.length > 5) {
     throw new Error('A orientação gerada não possui uma quantidade válida de fases.');
@@ -96,6 +105,8 @@ function normalizarOrientacao(dados, tema) {
   };
 }
 
+// Restringe a ordem de tentativa a provedores conhecidos, ignora duplicatas e
+// mantém somente credenciais não vazias fornecidas pela configuração do servidor.
 function lerConfiguracaoProvedores(valor) {
   let configuracao;
   try {
@@ -121,6 +132,8 @@ function lerConfiguracaoProvedores(valor) {
   )).map((nome) => ({ nome, ...provedores[nome] }));
 }
 
+// Converte respostas HTTP em dados ou erros explícitos para permitir o fallback
+// ao próximo provedor sem tratar uma resposta de erro como sucesso.
 async function respostaJson(response) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -131,6 +144,7 @@ async function respostaJson(response) {
   return body;
 }
 
+// Envia a solicitação no formato nativo da API Gemini e extrai o JSON da resposta.
 async function gerarComGemini(provedor, prompt) {
   const modelo = provedor.model || 'gemini-2.5-flash';
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelo)}:generateContent?key=${encodeURIComponent(provedor.apiKey)}`;
@@ -147,6 +161,8 @@ async function gerarComGemini(provedor, prompt) {
   return extrairJson(body.candidates?.[0]?.content?.parts?.map((parte) => parte.text || '').join(''));
 }
 
+// Groq e OpenRouter aceitam o formato de chat completions compatível com OpenAI;
+// o endpoint é selecionado pelo provedor validado na configuração.
 async function gerarComOpenAICompativel(provedor, prompt) {
   const endpoints = {
     groq: 'https://api.groq.com/openai/v1/chat/completions',
@@ -174,11 +190,14 @@ async function gerarComOpenAICompativel(provedor, prompt) {
   return extrairJson(body.choices?.[0]?.message?.content);
 }
 
+// Mantém a decisão de transporte em um único ponto para cada provedor suportado.
 async function gerarComProvedor(provedor, prompt) {
   if (provedor.nome === 'gemini') return gerarComGemini(provedor, prompt);
   return gerarComOpenAICompativel(provedor, prompt);
 }
 
+// Tenta os provedores configurados em sequência, registra falhas individuais e
+// só retorna depois que uma resposta passou pela validação estrutural.
 async function gerarOrientacao(entrada, configuracaoSecreta) {
   const dados = validarEntrada(entrada);
   const provedores = lerConfiguracaoProvedores(configuracaoSecreta);

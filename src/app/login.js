@@ -12,8 +12,8 @@ import { createUserWithEmailAndPassword, GoogleAuthProvider, sendPasswordResetEm
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import { estilos as e, espaco } from '../componentes/estilos';
 import { cores } from '../componentes/cores';
-import { auth, firebaseConfigurado } from '../lib/firebase';
-import { useAutenticacao } from '../lib/AuthContext';
+import { auth, firebaseConfigurado } from '../servicos/firebase/firebase';
+import { useAutenticacao } from '../contextos/AuthContext';
 
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;

@@ -1,5 +1,5 @@
 import { httpsCallable } from 'firebase/functions';
-import { funcoes } from './firebase';
+import { funcoes } from '../firebase/firebase';
 
 export async function gerarOrientacaoComIA(entrada) {
   if (!funcoes) {

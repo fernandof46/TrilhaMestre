@@ -1,243 +1,172 @@
-import React, { useState } from 'react'; // Importa a biblioteca React e o Hook useState para controle de estados dos inputs
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'; // Importa os primitivos de interface e acessibilidade nativos do ecossistema móvel
-import { useRouter } from 'expo-router'; // Importa o roteador do Expo Router para efetuar a navegação após a criação
-import { generateRoadmap } from '../../lib/roadmap-generator'; // Importa o motor gerador local de estruturas de trilhas
-import { gerarOrientacaoComIA } from '../../lib/ai-orientation';
-import { useTrilhas } from '../../lib/TrilhasContext'; // Importa o hook de persistência de dados no banco local do dispositivo
-import { estilos as e, espaco } from '../../componentes/estilos'; // Importa seus estilos globais unificados apelidados de 'e'
-import { cores } from '../../componentes/cores'; // Importa a paleta de cores centralizada do seu design system
+// src/app/(tabs)/index.js
+import React, { useState } from 'react'; // Importa React e estado para controle de carregamento e erros
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native'; // Importa componentes nativos de layout e alertas
+import { useRouter } from 'expo-router'; // Hook de navegação do Expo Router
+import { useAutenticacao } from '../../contextos/AuthContext'; // Contexto do usuário autenticado
+import { useTrilhas } from '../../contextos/TrilhasContext'; // Contexto das trilhas salvas do usuário
+import { gerarOrientacaoComIA } from '../../servicos/ia/iaRoteador'; // Cascata gratuita de IA (Groq -> Gemini -> OpenRouter)
+import { verificarEConsumirGeracaoTrilha } from '../../servicos/armazenamento/controleUsoServico'; // Trava de 3 trilhas/24h
+import { usarAnuncioIntersticial } from '../../servicos/anuncios/usarAnuncios'; // Hook de anúncio intersticial
+import { estilos as e, espaco } from '../../componentes/estilos'; // Design System oficial do projeto
+import { cores } from '../../componentes/cores'; // Paleta de cores oficial
+import FormularioGerador from '../../componentes/gerador/FormularioGerador'; // Formulário principal de criação de roadmap
 
-// Definição estática dos níveis de proficiência em português para o seletor de rádio móvel
-const niveis = [
-  { valor: 'iniciante', rotulo: 'Iniciante' },
-  { valor: 'intermediario', rotulo: 'Intermediário' },
-  { valor: 'avancado', rotulo: 'Avançado' },
-];
+export default function TelaInicial() {
+  const roteador = useRouter(); // Inicializa o controlador de rotas
+  const { usuario } = useAutenticacao(); // Dados do usuário logado
+  const { trilhas, isLoading } = useTrilhas(); // Lista de trilhas já salvas pelo usuário
+  const { exibirIntersticial } = usarAnuncioIntersticial(); // Controlador do anúncio de tela cheia
 
-export default function TelaCriarRoteiro() {
-  const roteador = useRouter(); // Inicializa o manipulador de rotas nativo
-  const { addTrilha, isLoading, storageError } = useTrilhas(); // Desestrutura as funções e estados do banco local
-  
-  // Estados reativos locais para gerenciar os dados inseridos pelos campos de formulário
-  const [tema, setTema] = useState('');
-  const [objetivo, setObjetivo] = useState('');
-  const [contexto, setContexto] = useState('');
-  const [nivel, setNivel] = useState('iniciante');
-  const [erro, setErro] = useState('');
-  const [criando, setCriando] = useState(false);
+  const [estaGerando, setEstaGerando] = useState(false); // Controla o spinner do botão "Gerar meu roadmap"
+  const [erroGeracao, setErroGeracao] = useState(''); // Exibe mensagens de erro amigáveis caso a geração falhe
 
-  const validarFormulario = () => {
-    const temaLimpo = tema.trim();
-    if (temaLimpo.length < 3) {
-      setErro('Informe um tema com pelo menos 3 caracteres.');
-      return null;
-    }
+  /**
+   * Acionado ao clicar no botão "Gerar meu roadmap" do FormularioGerador.
+   * Valida o limite de 3 trilhas/dia, exibe o Interstitial e abre a prévia gerada pela IA.
+   */
+  const lidarComGeracao = async ({
+    topico,
+    tipoMeta,
+    nivel,
+    horasPorSemana,
+    semanasHorizonte,
+    contexto,
+  }) => {
+    setErroGeracao('');
 
-    return { tema: temaLimpo, objetivo: objetivo.trim(), contexto: contexto.trim(), nivel };
-  };
+    // 1. Verifica se o usuário ainda possui cota dentro da janela de 24 horas (máximo 3)
+    const limite = await verificarEConsumirGeracaoTrilha();
 
-  const salvarTrilha = async (gerado, dados) => {
-    const roteiroSalvo = await addTrilha({
-      ...gerado,
-      topic: dados.tema,
-      level: dados.nivel,
-      completedStepIds: [],
-    });
-    roteador.push(`/trilha/${roteiroSalvo.id}`);
-  };
-
-  const criarRoteiroComIA = async () => {
-    const dados = validarFormulario();
-    if (!dados) return;
-    setErro('');
-    setCriando(true);
-    try {
-      const gerado = await gerarOrientacaoComIA({
-        tema: dados.tema,
-        objetivo: dados.objetivo,
-        contexto: dados.contexto,
-        nivel: dados.nivel,
-      });
-      await salvarTrilha(gerado, dados);
-    } catch (erroCriacao) {
-      setErro(erroCriacao.message || 'Não foi possível gerar a orientação. Tente novamente.');
-      console.error('Falha ao criar trilha:', erroCriacao);
-    } finally {
-      setCriando(false);
-    }
-  };
-
-  const criarRoteiroLocal = async () => {
-    const dados = validarFormulario();
-    if (!dados) return;
-    setErro('');
-    setCriando(true);
-    try {
-      const gerado = generateRoadmap(
-        dados.tema,
-        dados.contexto || dados.objetivo || dados.tema,
-        dados.nivel,
+    if (!limite.permitido) {
+      Alert.alert(
+        'Limite Diário Atingido 🔒',
+        'Você já gerou suas 3 trilhas gratuitas de hoje.\n\nSeu limite será renovado automaticamente em ~' +
+          limite.horasRestantes +
+          'h.'
       );
-      await salvarTrilha(gerado, dados);
-    } catch (erroCriacao) {
-      setErro('Não foi possível salvar a trilha neste dispositivo. Tente novamente.');
-      console.error('Falha ao criar trilha local:', erroCriacao);
-    } finally {
-      setCriando(false);
+      return;
     }
+
+    // Monta o objetivo e o contexto enriquecido com carga horária e prazo escolhidos pelo aluno
+    const objetivoFormatado =
+      tipoMeta === 'construir'
+        ? 'Construir um projeto prático em ' + topico
+        : 'Aprender e dominar ' + topico + ' do zero';
+
+    const contextoCompleto = [
+      'Disponibilidade: ' + horasPorSemana + ' horas por semana.',
+      'Prazo desejado: ' + semanasHorizonte + ' semanas.',
+      contexto ? 'Observações do aluno: ' + contexto : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    setEstaGerando(true);
+
+    // 2. Exibe o anúncio Interstitial e, logo após fechar, gera o roteiro com IA gratuita
+    exibirIntersticial(async () => {
+      try {
+        const roteiroGerado = await gerarOrientacaoComIA({
+          tema: topico,
+          objetivo: objetivoFormatado,
+          nivel,
+          contexto: contextoCompleto,
+        });
+
+        // Monta o objeto temporário (rascunho/prévia) para o usuário explorar antes de salvar
+        const rascunho = {
+          ...roteiroGerado,
+          id: 'previa-' + Date.now(),
+          level: nivel,
+          topic: topico,
+          goal: objetivoFormatado,
+          context: contextoCompleto,
+        };
+
+        // Abre a tela de visualização passando o rascunho via parâmetro
+        roteador.push({
+          pathname: '/trilha/' + rascunho.id,
+          params: { rascunhoJson: JSON.stringify(rascunho) },
+        });
+      } catch (erro) {
+        console.error('Falha ao gerar trilha:', erro);
+        setErroGeracao(
+          erro instanceof Error ? erro.message : 'Não foi possível gerar sua trilha agora.'
+        );
+      } finally {
+        setEstaGerando(false);
+      }
+    });
   };
 
-  return (
-    // KeyboardAvoidingView impede que o teclado virtual do celular cubra o botão ou o campo de entrada multiline
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={e.containerPrincipal} // Consome a raiz predefinida do seu aplicativo móvel
+    return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: cores.bkprincipal }}
+      contentContainerStyle={[
+        e.containerPrincipal,
+        { flex: undefined, flexGrow: 1 },
+      ]}
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView
-        keyboardShouldPersistTaps="handled" // Permite fechar o teclado clicando nas áreas vazias da tela de forma fluida
-        showsVerticalScrollIndicator={false} // Mantém o visual do painel limpo removendo a barra de rolagem lateral
-      >
-        {/* Chamada institucional da marca do seu aplicativo */}
-        <Text style={e.rotuloDestaqueEspacado}>TRILHAMESTRE</Text>
-        
-        {/* Título de impacto e descrição utilizando a tipografia compartilhada do seu sistema */}
-        <Text style={e.textoTituloDestaque}>Seu próximo objetivo começa aqui.</Text>
-        <Text style={e.textoDescricao}>
-          Conte o que quer aprender ou realizar em qualquer área. A IA organiza um plano de estudo e próximos passos.
-        </Text>
 
-        {/* Banner Informativo: Substitui a div de aviso utilizando o seletor 'blocoVerde' global do design system */}
-        <View style={e.blocoNotaNovaEstrategia}>
-          <Text style={e.textoApoio}>
-            A orientação com IA atende temas de qualquer área. Ela precisa de conexão, login e provedores configurados
-            no servidor. Seu tema, objetivo e contexto serão enviados ao provedor configurado; não inclua dados pessoais
-            sensíveis. As pesquisas sugeridas são pontos de partida, não recomendações verificadas.
-          </Text>
-        </View>
+      {/* Cabeçalho da seção de planejamento */}
+      <View>
+        <Text style={e.rotuloDestaqueEspacado}>PLANEJADOR INTELIGENTE</Text>
+        <Text style={e.textoTituloDestaque}>Planeje seus estudos</Text>
+        {usuario?.email ? (
+          <Text style={[e.textoApoio, { marginTop: espaco.xs }]}>{usuario.email}</Text>
+        ) : null}
+      </View>
 
-        {/* Cartão de Formulário Principal: Renderizado através do seletor 'cartaoPrincipal' global */}
-        <View style={e.cartaoPrincipal}>
-          
-          {/* Label de entrada do Tema */}
-          <Text style={e.textoEnunciado}>O que você quer aprender ou construir?</Text>
-          
-          {/* Caixa de Entrada de Texto de Linha Única */}
-          <TextInput
-            accessibilityLabel="Tema da trilha"
-            autoCapitalize="sentences"
-            maxLength={120}
-            onChangeText={setTema}
-            placeholder="Ex.: psicologia, culinária, fotografia ou uma carreira"
-            placeholderTextColor={cores.descricao}
-            returnKeyType="next"
-            style={[e.campoTextoMensagem, { marginTop: espaco.md, maxHeight: 48, paddingVertical: espaco.md }]} // Reutiliza a base de inputs rebaixados do sistema
-            value={tema}
-          />
+      <Text style={[e.textoDescricao, { textAlign: 'left', marginTop: espaco.md }]}>
+        Informe o que deseja aprender para gerar um roteiro com etapas, tutor IA e materiais de apoio.
+      </Text>
 
-          <Text style={[e.textoEnunciado, { marginTop: espaco.xl }]}>O que você quer alcançar?</Text>
-          <TextInput
-            accessibilityLabel="Objetivo da trilha"
-            autoCapitalize="sentences"
-            maxLength={240}
-            onChangeText={setObjetivo}
-            placeholder="Ex.: mudar de carreira, preparar uma prova ou criar um projeto"
-            placeholderTextColor={cores.descricao}
-            returnKeyType="next"
-            style={[e.campoTextoMensagem, { marginTop: espaco.md, minHeight: 48 }]}
-            value={objetivo}
-          />
+      {/* Formulário principal de criação de trilha */}
+      <View style={{ marginTop: espaco.xl }}>
+        <FormularioGerador
+          aoGerar={lidarComGeracao}
+          estaGerando={estaGerando}
+          erro={erroGeracao}
+        />
+      </View>
 
-          {/* Label de seleção de Níveis */}
-          <Text style={[e.textoEnunciado, { marginTop: espaco.xl }]}>Seu nível atual</Text>
-          
-          {/* Container de Botões de Rádio horizontais alinhados através do seletor 'areaSeletorStatus' */}
-          <View style={e.areaSeletorStatus}>
-            {niveis.map((item) => {
-              const selecionado = nivel === item.valor;
-              return (
-                <Pressable
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: selecionado }}
-                  key={item.valor}
-                  onPress={() => setNivel(item.valor)}
-                  // Aplica a combinação por array: Se ativo, mescla o estilo com a classe global 'estadoAtivo'
-                  style={[e.pilulaStatusItem, selecionado && e.estadoAtivo, { flex: 1, alignItems: 'center' }]}
-                >
-                  {/* Modifica a cor do texto de forma dinâmica baseada no estado de seleção */}
-                  <Text style={selecionado ? e.textoAtivoForte : e.textoSecundario}>
-                    {item.rotulo}
-                  </Text>
-                </Pressable>
-              );
-            })}
+      {/* Lista rápida das últimas 3 trilhas salvas */}
+      <View style={{ marginTop: espaco.xl }}>
+        <Text style={[e.textoTituloItem, { marginBottom: espaco.md }]}>Trilhas recentes</Text>
+        {isLoading ? (
+          <Text style={e.textoApoio}>Carregando...</Text>
+        ) : trilhas.length === 0 ? (
+          <View style={e.cartaoGenerico}>
+            <View style={e.cartaoConteudo}>
+              <Text style={e.textoApoio}>Nenhuma trilha salva ainda.</Text>
+            </View>
           </View>
+        ) : (
+          trilhas.slice(0, 3).map((trilha) => (
+            <Pressable
+              key={trilha.id}
+              onPress={() => roteador.push('/trilha/' + trilha.id)}
+              style={({ pressed }) => [
+                e.cartaoGenerico,
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <View style={e.cartaoConteudo}>
+                <Text style={e.rotuloDestaqueEspacado}>
+                  {trilha.level} · {trilha.estimatedTime}
+                </Text>
+                <Text style={e.textoTituloTrilha}>{trilha.title}</Text>
+                <Text numberOfLines={2} style={e.textoApoio}>
+                  {trilha.description}
+                </Text>
+              </View>
+            </Pressable>
+          ))
+        )}
+      </View>
 
-          {/* Label do Contexto Opcional */}
-          <Text style={[e.textoEnunciado, { marginTop: espaco.xl }]}>Contexto extra (opcional)</Text>
-          
-          {/* Caixa de Entrada de Texto Multiline (Área de Texto Longa) */}
-          <TextInput
-            accessibilityLabel="Contexto adicional"
-            maxLength={500}
-            multiline
-            onChangeText={setContexto}
-            placeholder="Conte suas preferências, recursos disponíveis ou quanto tempo tem."
-            placeholderTextColor={cores.descricao}
-            // Combina o campo de texto de mensagens padrão expandindo a altura máxima conforme a regra original
-            style={[e.campoTextoMensagem, e.areaRolagemEstrategia, { marginTop: espaco.md, maxHeight: 96 }]}
-            textAlignVertical="top" // Força o placeholder a iniciar no topo esquerdo do input no Android
-            value={contexto}
-          />
-
-          {/* Renderização condicional de erros de validação local ou do banco de dados */}
-          {erro ? <Text accessibilityRole="alert" style={[e.textoErro, { marginTop: espaco.md }]}>{erro}</Text> : null}
-          {storageError ? (
-            <Text accessibilityRole="alert" style={[e.textoErro, { marginTop: espaco.md }]}>
-              O armazenamento local não pôde ser lido. As trilhas podem não persistir após fechar o app.
-            </Text>
-          ) : null}
-
-          {/* Gera uma orientação autenticada por meio da função Firebase. */}
-          <Pressable
-            accessibilityRole="button"
-            disabled={isLoading || criando || storageError}
-            onPress={criarRoteiroComIA}
-            // Controla a opacidade nativa nas ações de toque e desabilitação combinando seletores globais de botões primários
-            style={({ pressed }) => [
-              e.botaoConfirmar,
-              (isLoading || criando || storageError) && e.botaoDesabilitado,
-              pressed && { opacity: 0.82 }
-            ]}
-          >
-            {/* Texto interno do botão centralizado consumindo a tipografia master de botões */}
-            <Text style={e.textoBotao}>
-              {criando ? 'Preparando orientação...' : 'Gerar orientação com IA'}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            disabled={isLoading || criando || storageError}
-            onPress={criarRoteiroLocal}
-            style={({ pressed }) => [
-              e.botaoSecundario,
-              (isLoading || criando || storageError) && e.botaoDesabilitado,
-              pressed && { opacity: 0.82 },
-            ]}
-          >
-            <Text style={e.textoBotao}>Criar trilha sem IA</Text>
-          </Pressable>
-          
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={{ height: espaco.xxl, backgroundColor: cores.bkprincipal }} />
+    </ScrollView>
   );
 }

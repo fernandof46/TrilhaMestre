@@ -83,6 +83,10 @@ O tema, objetivo e contexto digitados para uma orientação são enviados ao pro
 - Abertura dos materiais de estudo no navegador do dispositivo.
 - Exportação da trilha em PDF e compartilhamento pelo menu nativo do sistema.
 
+## Documentação do fluxo
+
+Consulte [Como o TrilhaMestre funciona](./docs/FLUXO-DO-APP.md) para entender a navegação entre telas, o destino de cada ação, a geração de trilhas e onde os dados são armazenados.
+
 ## Verificações
 
 ```bash

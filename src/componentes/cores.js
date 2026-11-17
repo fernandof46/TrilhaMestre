@@ -8,7 +8,7 @@ export const cores = {
   bkmodais: 'rgba(0, 0, 0, 0.7)',
 
   // Textos e Títulos
-  titulos: '#FFFFFF',
+  titulos: '#00A19C',
   descricao: '#AAAAAA',
   textoComum: '#DDDDDD',
   botoesTexto: '#FFFFFF',

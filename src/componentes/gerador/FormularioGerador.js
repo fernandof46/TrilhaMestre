@@ -65,11 +65,11 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
       
       {/* Campo: Tópico / Objetivo Principal */}
       <View style={estilos.grupoCampo}>
-        <Text style={estilos.rotuloCampo}>
+        <Text style={estilos.rotuloDestaque}>
           O que você quer aprender ou construir?
         </Text>
         <TextInput
-          style={estilos.entradaTexto}
+          style={estilos.textoSecundario}
           value={topico}
           onChangeText={definirTopico}
           placeholder="Ex.: tocar violão, ciência de dados, marcenaria..."
@@ -107,6 +107,7 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
 
       {/* Seção dupla: Horas por semana e Prazo desejado */}
       <GrupoDeEscolha
+        style={estilos.cartaoPergunta}
         rotulo="Horas por semana"
         variante="pills"
         opcoes={OPCOES_HORAS}
@@ -124,7 +125,7 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
 
       {/* Campo: Contexto Extra (Textarea) */}
       <View style={estilos.grupoCampo}>
-        <Text style={estilos.rotuloCampo}>
+        <Text style={estilos.rotuloDestaque}>
           Contexto extra (opcional)
         </Text>
         <TextInput
@@ -147,7 +148,7 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
 
       {/* Botão de Submissão / Geração */}
       <TouchableOpacity
-        style={[estilos.botaoGerar, estaGerando && { opacity: 0.6 }]}
+        style={[estilos.botaoSecundario, estaGerando && { opacity: 0.6 }]}
         onPress={lidarComEnvio}
         disabled={estaGerando}
         activeOpacity={0.8}
@@ -158,7 +159,7 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
             <Text style={estilos.textoBotaoGerar}>Gerando estratégia...</Text>
           </>
         ) : (
-          <Text style={estilos.textoBotaoGerar}>
+          <Text style={estilos.textoTituloItem}>
             Gerar meu roadmap ➔
           </Text>
         )}

@@ -17,6 +17,7 @@ import { ProvedorAutenticacao, useAutenticacao } from '../contextos/AuthContext'
  */
 function NavegacaoAutenticada() {
   const { usuario, carregando } = useAutenticacao(); // Obtém o usuário atual e o status inicial de verificação
+  console.log('DIAGNÓSTICO AUTH:', { carregando, temUsuario: Boolean(usuario), uid: usuario?.uid });
   const segmentos = useSegments(); // Captura o caminho atual da navegação (ex: ['login'] ou ['(tabs)'])
   const roteador = useRouter(); // Inicializa o controlador imperativo de rotas
 

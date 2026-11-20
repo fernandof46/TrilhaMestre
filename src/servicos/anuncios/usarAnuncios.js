@@ -26,7 +26,11 @@ function useAnuncioIntersticial() {
 
     const { InterstitialAd, AdEventType, TestIds } = BibliotecaAnuncios;
     // Lê o ID de produção do arquivo .env ou usa o ID oficial de testes do Google
-    const idBloco = process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID || TestIds.INTERSTITIAL;
+    // Em desenvolvimento (__DEV__), força TestIds do Google; no build de produção (.aab), usa o ID real do .env
+    const idBloco = __DEV__
+      ? TestIds.INTERSTITIAL
+      : process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID || TestIds.INTERSTITIAL;
+
 
     try {
       // Cria a instância do anúncio solicitando anúncios não personalizados (conformidade LGPD/Play Store)
@@ -108,7 +112,11 @@ function useAnuncioPremiado() {
     // O carregamento usa os eventos específicos do vídeo; fechamento e falha são
     // eventos gerais de anúncios de tela cheia, por isso vêm de AdEventType.
     const { RewardedAd, RewardedAdEventType, AdEventType, TestIds } = BibliotecaAnuncios;
-    const idBloco = process.env.EXPO_PUBLIC_ADMOB_REWARDED_ID || TestIds.REWARDED;
+    // Em desenvolvimento (__DEV__), força TestIds do Google; no build de produção (.aab), usa o ID real do .env
+    const idBloco = __DEV__
+      ? TestIds.INTERSTITIAL
+      : process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID || TestIds.INTERSTITIAL;
+
 
     try {
       const premiado = RewardedAd.createForAdRequest(idBloco, {

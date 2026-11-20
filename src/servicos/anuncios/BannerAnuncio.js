@@ -1,5 +1,5 @@
 // src/servicos/anuncios/BannerAnuncio.js
-import React from 'react'; // Importa o React para renderização do componente visual
+import React, { useState } from 'react'; // Importa o React e o estado para ocultar o contêiner caso o anúncio falhe ao carregar
 import { View, StyleSheet, TurboModuleRegistry } from 'react-native'; // Importa contêiner, estilos e verificador nativo
 
 // Verifica a presença do módulo sem importar a biblioteca de anúncios no escopo
@@ -11,22 +11,29 @@ const possuiModuloNativoAdMob = TurboModuleRegistry.get('RNGoogleMobileAdsModule
  * Exibe um banner adaptativo discreto na base do aplicativo sem interferir na leitura.
  */
 export function BannerAnuncio() {
-  // Oculta silenciosamente apenas se estiver rodando no Expo Go sem suporte nativo
-  if (!possuiModuloNativoAdMob) return null;
+  const [falhouAoCarregar, setFalhouAoCarregar] = useState(false); // Evita faixa vazia se não houver rede ou inventário
+
+  // Oculta silenciosamente se estiver rodando no Expo Go ou se houve falha de carregamento
+  if (!possuiModuloNativoAdMob || falhouAoCarregar) return null;
 
   // O require fica depois da checagem para que o pacote não acesse TurboModules ausentes.
   const { BannerAd, BannerAdSize, TestIds } = require('react-native-google-mobile-ads');
 
+  // Em desenvolvimento (__DEV__), força TestIds do Google; no build de produção (.aab), usa o ID real do .env
+  const unitId = __DEV__
+    ? TestIds.BANNER
+    : process.env.EXPO_PUBLIC_ADMOB_BANNER_ID || TestIds.BANNER;
+
   return (
     <View style={estilosBanner.containerBanner}>
       <BannerAd
-        // Usa o ID de produção configurado no .env ou o ID oficial de teste do Google
-        unitId={process.env.EXPO_PUBLIC_ADMOB_BANNER_ID || TestIds.BANNER}
+        unitId={unitId} // ID protegido contra tráfego inválido em testes
         // Formato adaptativo ancorado: ajusta automaticamente à largura de qualquer celular
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true, // Conformidade com privacidade e LGPD
         }}
+        onAdFailedToLoad={() => setFalhouAoCarregar(true)} // Recolhe o espaço discretamente se falhar
       />
     </View>
   );

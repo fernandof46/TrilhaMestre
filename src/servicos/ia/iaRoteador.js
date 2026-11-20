@@ -335,10 +335,22 @@ export async function gerarQuestionarioModuloComIA({ trilha, modulo }) {
     throw new Error('Não foi possível formatar as questões geradas.');
   }
 
-  return json.questions.map((q) => ({
-    question: String(q.question || ''),
-    options: Array.isArray(q.options) ? q.options.slice(0, 4).map(String) : [],
-    correct_index: Number.isInteger(q.correct_index) ? q.correct_index : 0,
-    explanation: String(q.explanation || ''),
-  }));
+    return json.questions.map((q) => {
+    const opcoesBrutas = Array.isArray(q.options) ? q.options : (q.alternativas || []);
+    const opcoesLimpas = opcoesBrutas.slice(0, 4).map((opt) => {
+      if (typeof opt === 'string') return opt.trim();
+      if (opt && typeof opt === 'object') {
+        return String(opt.text || opt.texto || opt.label || opt.opcao || '').trim();
+      }
+      return String(opt || '').trim();
+    });
+
+    return {
+      question: String(q.question || q.pergunta || '').trim(),
+      options: opcoesLimpas,
+      correct_index: Number.isInteger(q.correct_index) ? q.correct_index : 0,
+      explanation: String(q.explanation || q.explicacao || '').trim(),
+    };
+  });
+
 }

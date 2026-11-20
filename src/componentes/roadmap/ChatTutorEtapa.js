@@ -1,3 +1,4 @@
+// componentes/roadmap/ChatTutorEtapa.js
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -10,14 +11,11 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { estilos } from './estilos';
-import { cores } from './cores';
+import { estilos, espaco } from '../estilos';
+import { cores } from '../cores';
 
-/**
- * ATALHOS DE PERGUNTAS RÁPIDAS
- * Dúvidas frequentes que o usuário pode acionar com 1 toque.
- */
 const SUGESTOES_INICIAIS = [
   'Explique de forma simples',
   'Me dê um exemplo prático',
@@ -25,22 +23,9 @@ const SUGESTOES_INICIAIS = [
   'Como sei que estou pronto?',
 ];
 
-// Mensagem que o assistente dispara sozinho ao abrir pela primeira vez
-const MENSAGEM_BOAS_VINDAS_TUTOR = 'Olá! Me explique esta etapa de forma simples e diga por onde eu começo.';
+const MENSAGEM_BOAS_VINDAS_TUTOR =
+  'Olá! Me explique esta etapa de forma simples e diga por onde eu começo.';
 
-/**
- * COMPONENTE: ChatTutorEtapa
- * 
- * Função real: Assistente de IA focado exclusivamente em responder dúvidas
- * e destravar o usuário sobre o conteúdo de uma etapa específica.
- * 
- * @param {boolean} visivel - Controla se a janela do chat está aberta
- * @param {function} onFechar - Callback chamado para fechar o modal
- * @param {object} trilha - Objeto com os dados do roadmap
- * @param {object} modulo - Módulo atual do estudo
- * @param {object} etapa - Etapa específica em estudo
- * @param {function} funcaoConsultarIA - Função que conecta com o backend/IA
- */
 export default function ChatTutorEtapa({
   visivel,
   onFechar,
@@ -49,12 +34,13 @@ export default function ChatTutorEtapa({
   etapa,
   funcaoConsultarIA,
 }) {
+  const insets = useSafeAreaInsets();
+
   const [mensagens, setMensagens] = useState([]);
   const [textoEntrada, setTextoEntrada] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [mensagemErro, setMensagemErro] = useState('');
 
-  // Referência do ScrollView para sempre manter a última mensagem visível
   const rolarConversaRef = useRef(null);
 
   const rolarParaOFinal = useCallback(() => {
@@ -63,68 +49,71 @@ export default function ChatTutorEtapa({
     }, 100);
   }, []);
 
-  /**
-   * Envia uma pergunta para o Tutor de IA e anexa a resposta na lista
-   */
-  const enviarPerguntaParaTutor = useCallback(async (pergunta, historicoAtual) => {
-    const mensagemUsuario = {
-      papel: 'usuario',
-      conteudo: pergunta,
-      horario: Date.now(),
-    };
+  const enviarPerguntaParaTutor = useCallback(
+    async (pergunta, historicoAtual) => {
+      const mensagemUsuario = {
+        papel: 'usuario',
+        conteudo: pergunta,
+        horario: Date.now(),
+      };
 
-    const novoHistorico = [...historicoAtual, mensagemUsuario];
-    setMensagens(novoHistorico);
-    setCarregando(true);
-    setMensagemErro('');
-    rolarParaOFinal();
+      const novoHistorico = [...historicoAtual, mensagemUsuario];
+      setMensagens(novoHistorico);
+      setCarregando(true);
+      setMensagemErro('');
+      rolarParaOFinal();
 
-    try {
-      let respostaTutor = '';
+      try {
+        if (!funcaoConsultarIA) {
+          throw new Error('O serviço do tutor não está configurado neste projeto.');
+        }
 
-      if (funcaoConsultarIA) {
-        respostaTutor = await funcaoConsultarIA({
+        const respostaTutor = await funcaoConsultarIA({
           trilha,
           modulo,
           etapa,
           historico: novoHistorico,
           pergunta,
         });
-      } else {
-        throw new Error('O serviço do tutor não está configurado neste projeto.');
+
+        const mensagemAssistente = {
+          papel: 'assistente',
+          conteudo: respostaTutor,
+          horario: Date.now(),
+        };
+
+        setMensagens((atual) => [...atual, mensagemAssistente]);
+      } catch (erro) {
+        console.error('Falha ao consultar o tutor:', erro);
+        setMensagemErro(
+          erro instanceof Error ? erro.message : 'Não foi possível consultar o tutor agora.'
+        );
+      } finally {
+        setCarregando(false);
+        rolarParaOFinal();
       }
+    },
+    [etapa, funcaoConsultarIA, modulo, rolarParaOFinal, trilha]
+  );
 
-      const mensagemAssistente = {
-        papel: 'assistente',
-        conteudo: respostaTutor,
-        horario: Date.now(),
-      };
-
-      setMensagens((atual) => [...atual, mensagemAssistente]);
-    } catch (erro) {
-      console.error('Falha ao consultar o tutor:', erro);
-      setMensagemErro(erro instanceof Error ? erro.message : 'Não foi possível consultar o tutor agora.');
-    } finally {
-      setCarregando(false);
-      rolarParaOFinal();
-    }
-  }, [etapa, funcaoConsultarIA, modulo, rolarParaOFinal, trilha]);
-
-  /**
-   * Inicia o chat automaticamente com a primeira explicação ao abrir a etapa
-   */
+  // Reinicia a conversa e dispara a explicação inicial sempre que abrir uma etapa
   useEffect(() => {
-    if (!visivel || !etapa?.key) return;
+    if (!visivel) {
+      setMensagens([]);
+      setTextoEntrada('');
+      setMensagemErro('');
+      return;
+    }
+
+    if (!etapa?.key && !etapa?.id) return;
 
     const temporizador = setTimeout(() => {
       void enviarPerguntaParaTutor(MENSAGEM_BOAS_VINDAS_TUTOR, []);
-    }, 0);
-    return () => clearTimeout(temporizador);
-  }, [visivel, etapa?.key, enviarPerguntaParaTutor]);
+    }, 50);
 
-  /**
-   * Acionador de envio via botão ou via toque em sugestão
-   */
+    return () => clearTimeout(temporizador);
+  }, [visivel, etapa?.key, etapa?.id, enviarPerguntaParaTutor]);
+
   const processarEnvio = (textoSugestao) => {
     const textoFinal = (textoSugestao ?? textoEntrada).trim();
     if (!textoFinal || carregando) return;
@@ -132,43 +121,69 @@ export default function ChatTutorEtapa({
     setTextoEntrada('');
     enviarPerguntaParaTutor(textoFinal, mensagens);
   };
-
   return (
     <Modal
-      transparent={true}
+      transparent={false}
       visible={visivel}
       animationType="slide"
+      statusBarTranslucent={false}
       onRequestClose={onFechar}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={estilos.fundoModalChatTutor}
+      <View
+        style={[
+          estilos.containerPrincipal,
+          {
+            paddingTop: Math.max(insets.top, espaco.xl) + espaco.sm,
+            paddingBottom: Math.max(insets.bottom, espaco.lg),
+          },
+        ]}
       >
-        <View style={estilos.painelConteudoChatTutor}>
-          
-          {/* CABEÇALHO */}
-          <View style={estilos.cabecalhoChatTutor}>
-            <View>
-              <View style={estilos.linhaTituloChatTutor}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+                    {/* CABEÇALHO */}
+          <View style={[estilos.cabecalhoModal, { alignItems: 'center', gap: espaco.md }]}>
+            <View style={estilos.areaTextos}>
+              <View style={estilos.linhaTituloModal}>
                 <Feather name="help-circle" size={16} color={cores.confirmar} />
-                <Text style={estilos.textoTituloChatTutor}>Tutor da Etapa</Text>
+                <Text style={estilos.textoTituloModal}>Tutor da Etapa</Text>
               </View>
-              <Text style={estilos.textoSubtituloEtapaTutor} numberOfLines={1}>
+              <Text style={estilos.textoSecundarioEspacado} numberOfLines={2}>
                 {etapa?.title || 'Dúvidas e orientações'}
               </Text>
             </View>
 
-            {/* Botão de Fechar */}
-            <TouchableOpacity onPress={onFechar} hitSlop={10}>
-              <Feather name="x" size={20} color={cores.descricao} />
+            {/* Botão explícito de Fechar usando a prop original onFechar */}
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Fechar tutor"
+              onPress={onFechar}
+              activeOpacity={0.75}
+              hitSlop={10}
+              style={[
+                estilos.superficie,
+                estilos.linhaCompacta,
+                {
+                  paddingHorizontal: espaco.md,
+                  paddingVertical: espaco.sm,
+                  borderRadius: 8,
+                },
+              ]}
+            >
+              <Feather name="x" size={16} color={cores.titulos} />
+              <Text style={estilos.textoEnunciado}>Fechar</Text>
             </TouchableOpacity>
           </View>
+
 
           {/* HISTÓRICO DE MENSAGENS */}
           <ScrollView
             ref={rolarConversaRef}
-            style={estilos.areaListaMensagensTutor}
-            showsVerticalScrollIndicator={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingVertical: espaco.md }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={true}
             onContentSizeChange={rolarParaOFinal}
           >
             {mensagens.map((msg, index) => {
@@ -176,9 +191,13 @@ export default function ChatTutorEtapa({
               return (
                 <View
                   key={`msg-${index}`}
-                  style={ehUsuario ? estilos.linhaMensagemUsuario : estilos.linhaMensagemTutor}
+                  style={
+                    ehUsuario
+                      ? estilos.linhaMensagemUsuario
+                      : estilos.linhaMensagemEngenheiro
+                  }
                 >
-                  <View style={ehUsuario ? estilos.balaoUsuario : estilos.balaoTutor}>
+                  <View style={ehUsuario ? estilos.balaoUsuario : estilos.balaoEngenheiro}>
                     <Text style={estilos.textoMensagemChat}>{msg.conteudo}</Text>
                   </View>
                 </View>
@@ -186,39 +205,40 @@ export default function ChatTutorEtapa({
             })}
 
             {carregando && (
-              <View style={estilos.areaIndicadorDigitandoTutor}>
+              <View style={estilos.areaIndicadorEngenheiro}>
                 <ActivityIndicator size="small" color={cores.confirmar} />
-                <Text style={estilos.textoIndicadorDigitandoTutor}>
-                  Tutor digitando orientação...
-                </Text>
+                <Text style={estilos.textoApoio}>Tutor digitando orientação...</Text>
               </View>
             )}
           </ScrollView>
 
           {/* SUGESTÕES RÁPIDAS */}
           {mensagens.length <= 2 && (
-            <View style={estilos.areaSugestoesRapidasTutor}>
+            <View style={[estilos.linhaChips, { marginTop: espaco.sm }]}>
               {SUGESTOES_INICIAIS.map((sugestao) => (
                 <TouchableOpacity
                   key={sugestao}
-                  style={estilos.botaoSugestaoRapidaTutor}
+                  style={estilos.grupoEscolhaVariantePill}
                   onPress={() => processarEnvio(sugestao)}
                   disabled={carregando}
                 >
-                  <Text style={estilos.textoBotaoSugestaoTutor}>{sugestao}</Text>
+                  <Text style={estilos.textoApoio}>{sugestao}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           )}
 
+          {/* ALERTA DE ERRO */}
           {mensagemErro ? (
-            <Text style={estilos.textoErroChatTutor}>{mensagemErro}</Text>
+            <View style={[estilos.bannerAlertaDestrutivo, { marginBottom: espaco.sm }]}>
+              <Text style={estilos.textoErro}>{mensagemErro}</Text>
+            </View>
           ) : null}
 
           {/* BARRA DE ENTRADA */}
-          <View style={estilos.areaEntradaMensagemTutor}>
+          <View style={[estilos.areaEntradaMensagem, { paddingTop: espaco.sm }]}>
             <TextInput
-              style={estilos.campoTextoMensagemTutor}
+              style={estilos.campoTextoMensagem}
               value={textoEntrada}
               onChangeText={setTextoEntrada}
               placeholder="Tire uma dúvida sobre esta etapa..."
@@ -228,19 +248,19 @@ export default function ChatTutorEtapa({
             />
 
             <TouchableOpacity
+              accessibilityLabel="Enviar pergunta"
               style={[
-                estilos.botaoEnviarMensagemTutor,
-                (!textoEntrada.trim() || carregando) && estilos.botaoEnviarDesabilitadoTutor,
+                estilos.botaoIconePrimario,
+                (!textoEntrada.trim() || carregando) && estilos.botaoDesabilitado,
               ]}
               onPress={() => processarEnvio()}
               disabled={!textoEntrada.trim() || carregando}
             >
-              <Feather name="send" size={16} color={cores.botoesTexto} />
+              <Feather name="send" size={16} color={cores.titulos} />
             </TouchableOpacity>
           </View>
-
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }

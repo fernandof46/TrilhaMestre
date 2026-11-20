@@ -1,8 +1,10 @@
+// src/app/(tabs)/_layout.js
 // Layout das abas principais do app; a autenticação e a pilha raiz ficam em src/app/_layout.js.
 import React from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { signOut } from 'firebase/auth';
+import { Feather } from '@expo/vector-icons';
 import { estilos as e } from '../../componentes/estilos';
 import { cores } from '../../componentes/cores';
 import { auth } from '../../servicos/firebase/firebase';
@@ -59,9 +61,33 @@ export default function LayoutAbasNavegacao() {
           sceneStyle: { backgroundColor: cores.bkprincipal },
         }}
       >
-        {/* Os nomes correspondem aos arquivos index.js e historico.js neste diretório. */}
-        <Tabs.Screen name="index" options={{ title: 'Criar Trilha' }} />
-        <Tabs.Screen name="historico" options={{ title: 'Minhas Trilhas' }} />
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Criar Trilha',
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="plus-circle" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="historico"
+          options={{
+            title: 'Minhas Trilhas',
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="layers" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="desempenho"
+          options={{
+            title: 'Desempenho',
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="bar-chart-2" size={size} color={color} />
+            ),
+          }}
+        />
       </Tabs>
 
       {/* O componente verifica a disponibilidade do módulo nativo antes de carregar o SDK. */}

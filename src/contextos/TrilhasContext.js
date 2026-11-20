@@ -11,6 +11,7 @@ export const STATUS_TRILHA = {
 
 const TrilhasContext = createContext(null);
 
+
 function parseTrilhas(saved) {
   const parsed = saved ? JSON.parse(saved) : [];
   const estruturaValida = Array.isArray(parsed) && parsed.every((trilha) => (

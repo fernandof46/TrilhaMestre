@@ -41,3 +41,5 @@ dist-ssr
 .vite
 .firebase/
 functions/node_modules/
+
+google-services.json

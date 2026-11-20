@@ -1,7 +1,7 @@
 // components/GrupoDeEscolha.js
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { estilos } from './estilos'; // Importa os estilos centralizados traduzidos
+import { estilos, espaco } from './estilos';
 
 /**
  * Componente Grupo de Escolha (GrupoDeEscolha)
@@ -21,15 +21,15 @@ export default function GrupoDeEscolha({
   variante = 'cards' 
 }) {
   return (
-    <View style={{ width: '100%', marginBottom: 12 }}>
+    <View style={{ width: '100%', gap: espaco.sm }}>
       {/* Exibe o rótulo superior do grupo */}
-      <Text style={estilos.textoEnunciado}>{rotulo}</Text>
+      <Text style={estilos.rotuloDestaque}>{rotulo}</Text>
 
-      {/* Container que envolve todas as opções disponíveis */}
-      <View style={estilos.linhaQuebra}>
+      {/* Container que distribui todas as opções na largura total */}
+      <View style={[estilos.linhaQuebra, { width: '100%', gap: espaco.md }]}>
         {opcoes.map((opcao) => {
-          // Verifica se esta opção específica é a que está selecionada no momento
           const estaAtiva = opcao.valor === valorSelecionado;
+          const ehCard = variante === 'cards';
 
           return (
             <TouchableOpacity
@@ -37,31 +37,36 @@ export default function GrupoDeEscolha({
               activeOpacity={0.7}
               onPress={() => aoMudarValor(opcao.valor)}
               style={[
-                // Aplica a variante de layout (card ou pílula)
-                variante === 'cards' 
-                  ? estilos.cartaoCompacto
-                  : estilos.botaoCompacto,
-                
-                // Aplica o estilo visual dependendo se está ativo ou inativo
-                estaAtiva 
-                  ? estilos.estadoAtivo
-                  : estilos.superficie,
+                // Usa as variantes dedicadas do Design System
+                ehCard 
+                  ? estilos.grupoEscolhaVarianteCard
+                  : [
+                      estilos.grupoEscolhaVariantePill,
+                      { flexGrow: 1, alignSelf: 'center', justifyContent: 'center' }
+                    ],
+                // Destaca a borda e o fundo quando selecionado
+                estaAtiva && estilos.estadoAtivo,
               ]}
             >
               {/* Rótulo/Texto principal da opção */}
-              <Text style={[
-                estilos.textoSecundario,
-                estaAtiva && estilos.textoAtivoDestaque
-              ]}>
+              <Text
+                style={[
+                  estilos.grupoEscolhaRotuloOpcao,
+                  !ehCard && { textAlign: 'center' },
+                  estaAtiva && estilos.textoAtivoDestaque,
+                ]}
+              >
                 {opcao.rotulo}
               </Text>
 
               {/* Dica secundária (exibida apenas no modo 'cards' se a opção possuir) */}
-              {variante === 'cards' && opcao.dica ? (
-                <Text style={[
-                  estilos.textoApoio,
-                  estaAtiva && estilos.textoAtivoDestaque
-                ]}>
+              {ehCard && opcao.dica ? (
+                <Text
+                  style={[
+                    estilos.textoApoioEspacado,
+                    estaAtiva && estilos.textoAtivoDestaque,
+                  ]}
+                >
                   {opcao.dica}
                 </Text>
               ) : null}

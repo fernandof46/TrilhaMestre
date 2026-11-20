@@ -12,7 +12,20 @@
           "package_name": "com.fernandobf.TrilhaMestre"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "261476649416-6snn3ev3ue5ec0l1scr1tkbui4o17h2g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.fernandobf.TrilhaMestre",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "261476649416-47hv5ev9kv0uig8l8dd56h5ova8d4ifb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB5JNukMVkGmEhrLIYm-1ifZ3BeezPwkzY"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "261476649416-47hv5ev9kv0uig8l8dd56h5ova8d4ifb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

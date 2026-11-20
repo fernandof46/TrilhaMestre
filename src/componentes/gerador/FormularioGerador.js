@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import GrupoDeEscolha from './GrupoDeEscolha';
-import { estilos } from './estilos';
+import { estilos as e, espaco, fonte, raio } from './estilos';
 import { cores } from './cores';
 
-// Opções estáticas para horas e semanas
 const OPCOES_HORAS = [
   { valor: 4, rotulo: '4 h' },
   { valor: 8, rotulo: '8 h' },
@@ -21,16 +20,7 @@ const OPCOES_SEMANAS = [
   { valor: 24, rotulo: '24 sem' },
 ];
 
-/**
- * Componente Formulário do Gerador (FormularioGerador)
- * Permite ao usuário configurar os parâmetros para a criação de um roadmap de aprendizado.
- * 
- * @param {Function} aoGerar - Função executada ao submeter o formulário com os dados preenchidos.
- * @param {boolean} estaGerando - Estado de carregamento enquanto o roadmap é gerado.
- * @param {string} erro - Mensagem de erro caso ocorra alguma falha na requisição.
- */
 export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
-  // Estados locais para controle dos inputs
   const [topico, definirTopico] = useState('');
   const [tipoMeta, definirTipoMeta] = useState('aprender');
   const [nivel, definirNivel] = useState('iniciante');
@@ -39,17 +29,12 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
   const [contexto, definirContexto] = useState('');
   const [tocado, definirTocado] = useState(false);
 
-  // Validação: Tópico precisa ter pelo menos 3 caracteres preenchidos
   const eInvalido = topico.trim().length < 3;
 
-  /**
-   * Função executada ao enviar o formulário
-   */
   const lidarComEnvio = () => {
     definirTocado(true);
     if (eInvalido) return;
 
-    // Dispara a função recebida por props com os dados estruturados em PT-BR
     aoGerar({
       topico: topico.trim(),
       tipoMeta,
@@ -61,22 +46,33 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
   };
 
   return (
-    <View style={estilos.formularioContainer}>
+    /* gap: espaco.xl distribui todos os blocos da página de forma uniforme */
+    <View style={[e.larguraTotal, { gap: espaco.xl, paddingBottom: espaco.xxl }]}>
       
       {/* Campo: Tópico / Objetivo Principal */}
-      <View style={estilos.grupoCampo}>
-        <Text style={estilos.rotuloDestaque}>
+      <View style={{ gap: espaco.sm }}>
+        <Text style={e.rotuloDestaque}>
           O que você quer aprender ou construir?
         </Text>
         <TextInput
-          style={estilos.textoSecundario}
+          style={[
+            e.rebaixada,
+            {
+              borderRadius: raio.md,
+              borderColor: eInvalido && tocado ? cores.cancelar : cores.bordaInput,
+              paddingHorizontal: espaco.lg,
+              paddingVertical: espaco.lg,
+              fontSize: fonte.md,
+              color: cores.titulos,
+            },
+          ]}
           value={topico}
           onChangeText={definirTopico}
           placeholder="Ex.: tocar violão, ciência de dados, marcenaria..."
           placeholderTextColor={cores.descricao}
         />
         {tocado && eInvalido ? (
-          <Text style={estilos.textoErroValidacao}>
+          <Text style={e.textoErro}>
             Descreva seu objetivo com pelo menos 3 caracteres.
           </Text>
         ) : null}
@@ -105,9 +101,8 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
         aoMudarValor={definirNivel} 
       />
 
-      {/* Seção dupla: Horas por semana e Prazo desejado */}
+      {/* Horas por semana */}
       <GrupoDeEscolha
-        style={estilos.cartaoPergunta}
         rotulo="Horas por semana"
         variante="pills"
         opcoes={OPCOES_HORAS}
@@ -115,6 +110,7 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
         aoMudarValor={definirHoras}
       />
 
+      {/* Prazo desejado */}
       <GrupoDeEscolha
         rotulo="Prazo desejado"
         variante="pills"
@@ -124,12 +120,23 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
       />
 
       {/* Campo: Contexto Extra (Textarea) */}
-      <View style={estilos.grupoCampo}>
-        <Text style={estilos.rotuloDestaque}>
+      <View style={{ gap: espaco.sm }}>
+        <Text style={e.rotuloDestaque}>
           Contexto extra (opcional)
         </Text>
         <TextInput
-          style={estilos.entradaTextoLongo}
+          style={[
+            e.rebaixada,
+            {
+              borderRadius: raio.md,
+              paddingHorizontal: espaco.lg,
+              paddingVertical: espaco.lg,
+              fontSize: fonte.md,
+              color: cores.titulos,
+              minHeight: 100,
+              textAlignVertical: 'top', // Faz o texto começar no topo no Android
+            },
+          ]}
           value={contexto}
           onChangeText={definirContexto}
           multiline={true}
@@ -141,26 +148,30 @@ export default function FormularioGerador({ aoGerar, estaGerando, erro }) {
 
       {/* Exibição de Erro do Servidor, se houver */}
       {erro ? (
-        <View style={estilos.containerErroServidor}>
-          <Text style={estilos.textoErroServidor}>⚠️ {erro}</Text>
+        <View style={e.bannerAlertaDestrutivo}>
+          <Text style={e.textoErro}>⚠️ {erro}</Text>
         </View>
       ) : null}
 
       {/* Botão de Submissão / Geração */}
       <TouchableOpacity
-        style={[estilos.botaoSecundario, estaGerando && { opacity: 0.6 }]}
+        style={[
+          e.botaoPrimario,
+          { height: 48, borderRadius: raio.md, marginTop: espaco.sm },
+          estaGerando && e.botaoDesabilitado,
+        ]}
         onPress={lidarComEnvio}
         disabled={estaGerando}
         activeOpacity={0.8}
       >
         {estaGerando ? (
           <>
-            <ActivityIndicator size="small" color={cores.botoesTexto} />
-            <Text style={estilos.textoBotaoGerar}>Gerando estratégia...</Text>
+            <ActivityIndicator size="small" color={cores.titulos} />
+            <Text style={e.textoTituloItem}>Gerando estratégia...</Text>
           </>
         ) : (
-          <Text style={estilos.textoTituloItem}>
-            Gerar meu roadmap ➔
+          <Text style={e.textoDescricao}>
+            Gerar minha trilha ➔
           </Text>
         )}
       </TouchableOpacity>

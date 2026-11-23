@@ -165,6 +165,58 @@ async function executarCascataIA(mensagens, systemPrompt, exigirJson = true) {
 
   throw new Error('Todos os provedores de IA estão indisponíveis no momento.');
 }
+// Lista de raízes/termos proibidos para proteção de menores e conformidade com a Google Play Store
+const TERMOS_BLOQUEADOS = [
+  // Conteúdo sexual e pornografia
+  'pornografia', 'porno', 'sexo explicito', 'nudez', 'erotico', 'prostituicao', 'pedofilia', 'abuso sexual',
+  // Violência extrema, armas e explosivos
+  'fabricar bomba', 'fazer bomba', 'explosivo', 'arma de fogo', 'fabricar arma', 'assassinato', 'homicidio', 'tortura',
+  // Automutilação e suicídio
+  'suicidio', 'automutilacao', 'se matar', 'cortar os pulsos',
+  // Drogas ilícitas e substâncias perigosas
+  'fabricar drogas', 'sintetizar drogas', 'cocaina', 'crack', 'heroina', 'metanfetamina', 'trafico',
+  // Crimes cibernéticos e ilícitos graves
+  'invadir sistema', 'hackear conta', 'clonar cartao', 'estelionato', 'lavagem de dinheiro', 'falsificar documento',
+  // Discurso de ódio e extremismo
+  'nazismo', 'supremacia racial', 'terrorismo',
+];
+
+/**
+ * Normaliza o texto removendo acentos, espaços extras e substituições comuns (ex: @ -> a, 3 -> e)
+ * para evitar burlas simples ao filtro de segurança.
+ */
+function normalizarParaFiltro(texto) {
+  return String(texto || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/[@4]/g, 'a')
+    .replace(/3/g, 'e')
+    .replace(/[1!]/g, 'i')
+    .replace(/0/g, 'o')
+    .replace(/\$/g, 's')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Verifica se o texto enviado pelo usuário contém temas sensíveis, perigosos ou impróprios para menores.
+ * Lança um erro amigável antes de consumir cota ou chamar a API externa.
+ */
+export function validarSegurancaConteudo(...textos) {
+  const textoCombinado = normalizarParaFiltro(textos.filter(Boolean).join(' '));
+  if (!textoCombinado) return;
+
+  const encontrouBloqueio = TERMOS_BLOQUEADOS.some((termo) =>
+    textoCombinado.includes(termo)
+  );
+
+  if (encontrouBloqueio) {
+    throw new Error(
+      'Este tema não é permitido no TrilhaMestre. Escolha um assunto educacional, profissional ou criativo seguro.'
+    );
+  }
+}
 
 // ============================================================================
 // 1. GERAR ROADMAP COMPLETO
@@ -188,6 +240,8 @@ export function validarEntrada(entrada) {
   if (objetivo.length > 240 || contexto.length > 800) {
     throw new TypeError('O objetivo ou contexto excede o limite permitido.');
   }
+
+  validarSegurancaConteudo(tema, objetivo, contexto);
 
   return { tema, objetivo, nivel, contexto };
 }
@@ -276,13 +330,17 @@ export async function gerarOrientacaoComIA(entrada) {
 // ============================================================================
 // 2. TUTOR DA ETAPA (ChatTutorEtapa.js)
 // ============================================================================
+
+
 export async function consultarTutorEtapaComIA({ trilha, modulo, etapa, historico = [], pergunta }) {
+  validarSegurancaConteudo(pergunta);
   const tituloTrilha = trilha?.title || 'Estudo Geral';
   const tituloModulo = modulo?.title || '';
   const tituloEtapa = etapa?.title || '';
   const descEtapa = etapa?.description || '';
 
   const systemPrompt = [
+    'Diretriz de segurança: Este aplicativo é utilizado por estudantes de todas as idades, incluindo menores. Recuse estritamente qualquer conteúdo sexual, violento, ilegal, perigoso, relacionado a drogas ilícitas, armas, automutilação ou discurso de ódio.',
     'Você é um tutor didático, paciente e prático do aplicativo Trilha Mestre.',
     'Responda em português do Brasil de forma clara, objetiva e encorajadora (use tópicos curtos quando ajudar).',
     'Contexto da trilha: ' + tituloTrilha,
@@ -312,9 +370,11 @@ export async function gerarQuestionarioModuloComIA({ trilha, modulo }) {
     : '';
 
   const systemPrompt =
+  
     'Você é um avaliador educacional. Responda exclusivamente com um objeto JSON válido, sem markdown.';
 
   const userPrompt = [
+    'Diretriz de segurança: Este aplicativo é utilizado por estudantes de todas as idades, incluindo menores. Recuse estritamente qualquer conteúdo sexual, violento, ilegal, perigoso, relacionado a drogas ilícitas, armas, automutilação ou discurso de ódio.',
     'Crie exatamente 4 perguntas de múltipla escolha em português brasileiro para testar o aprendizado deste módulo.',
     'Cada pergunta deve ter 4 alternativas plausíveis e apenas 1 correta.',
     'Formato JSON obrigatório:',

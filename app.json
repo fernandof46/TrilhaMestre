@@ -2,7 +2,7 @@
   "expo": {
     "name": "TrilhaMestre",
     "slug": "TrilhaMestre",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "Receba orientação de aprendizagem em qualquer área, acompanhe seu progresso e estude no seu ritmo.",
     "platforms": [
       "android",
@@ -17,7 +17,7 @@
       "supportsTablet": true
     },
     "android": {
-       "versionCode": 1,
+       "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#0C0B0E",
         "foregroundImage": "./assets/icon.png"

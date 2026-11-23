@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, Text, View,  KeyboardAvoidingView, Platfo
 import { useRouter } from 'expo-router'; // Hook de navegação imperativa do Expo Router
 import { useAutenticacao } from '../../contextos/AuthContext'; // Contexto que fornece os dados do usuário autenticado
 import { useTrilhas } from '../../contextos/TrilhasContext'; // Contexto global que armazena as trilhas salvas do usuário
-import { gerarOrientacaoComIA } from '../../servicos/ia/iaRoteador'; // Cascata gratuita de IA (Groq -> Gemini -> OpenRouter)
+import { gerarOrientacaoComIA, validarSegurancaConteudo } from '../../servicos/ia/iaRoteador'; // Cascata gratuita de IA (Groq -> Gemini -> OpenRouter)
 import { verificarEConsumirGeracaoTrilha } from '../../servicos/armazenamento/controleUsoServico'; // Serviço de trava diária (3 trilhas/24h)
 import { usarAnuncioIntersticial, usarAnuncioPremiado } from '../../servicos/anuncios/usarAnuncios'; // Hooks de Interstitial e Vídeo Premiado (AdMob)
 import { estilos as e, espaco } from '../../componentes/estilos'; // Tokens e classes visuais centralizadas do Design System
@@ -93,7 +93,7 @@ export default function TelaInicial() {
    * - Até 3 trilhas em 24h: exibe um anúncio Interstitial e gera a trilha.
    * - Acima de 3 trilhas em 24h: oferece um vídeo premiado de 30s para liberar +1 trilha extra.
    */
-  const lidarComGeracao = async ({
+    const lidarComGeracao = async ({
     topico,
     tipoMeta,
     nivel,
@@ -102,6 +102,19 @@ export default function TelaInicial() {
     contexto,
   }) => {
     setErroGeracao(''); // Limpa qualquer alerta de erro anterior antes de iniciar
+
+    // 0. Bloqueia imediatamente temas sensíveis antes de gastar cota diária ou exibir anúncios
+    try {
+      validarSegurancaConteudo(topico, contexto);
+    } catch (erroSeguranca) {
+      const msg =
+        erroSeguranca instanceof Error
+          ? erroSeguranca.message
+          : 'Este tema não é permitido no TrilhaMestre.';
+      setErroGeracao(msg);
+      Alert.alert('Tema não permitido 🛡️', msg);
+      return;
+    }
 
     // Formata o objetivo principal conforme a escolha entre 'aprender' ou 'construir'
     const objetivoFormatado =

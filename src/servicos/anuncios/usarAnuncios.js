@@ -111,11 +111,12 @@ function useAnuncioPremiado() {
 
     // O carregamento usa os eventos específicos do vídeo; fechamento e falha são
     // eventos gerais de anúncios de tela cheia, por isso vêm de AdEventType.
-    const { RewardedAd, RewardedAdEventType, AdEventType, TestIds } = BibliotecaAnuncios;
-    // Em desenvolvimento (__DEV__), força TestIds do Google; no build de produção (.aab), usa o ID real do .env
+        const { RewardedAd, RewardedAdEventType, AdEventType, TestIds } = BibliotecaAnuncios;
+    // Em desenvolvimento (__DEV__), força TestIds.REWARDED; no build de produção (.aab), usa o ID real do .env
     const idBloco = __DEV__
-      ? TestIds.INTERSTITIAL
-      : process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ID || TestIds.INTERSTITIAL;
+      ? TestIds.REWARDED
+      : process.env.EXPO_PUBLIC_ADMOB_REWARDED_ID || TestIds.REWARDED;
+
 
 
     try {
@@ -155,7 +156,11 @@ function useAnuncioPremiado() {
   /**
    * Exibe o vídeo premiado e só dispara 'aoConquistarRecompensa' se o usuário assistir até o final.
    */
+    /**
+   * Exibe o vídeo premiado e dispara 'aoConquistarRecompensa' assim que o usuário concluir o vídeo e fechá-lo.
+   */
   const exibirAnuncioPremiado = (aoConquistarRecompensa, aoEstarIndisponivel) => {
+    // No Expo Go (sem módulo nativo), libera imediatamente para permitir testar o fluxo
     if (!possuiModuloNativoAdMob || !BibliotecaAnuncios) {
       if (aoConquistarRecompensa) aoConquistarRecompensa();
       return;
@@ -164,30 +169,39 @@ function useAnuncioPremiado() {
     const { RewardedAdEventType, AdEventType } = BibliotecaAnuncios;
     const premiado = referenciaAnuncio.current;
 
+    // Se o vídeo ainda não baixou, tenta recarregar e avisa o chamador
     if (!carregado || !premiado) {
-      if (premiado) premiado.load(); // Tenta forçar o carregamento para a próxima tentativa
+      if (premiado) premiado.load();
       if (aoEstarIndisponivel) aoEstarIndisponivel();
       return;
     }
 
-    let recompensaConquistada = false; // Garante que fechar o vídeo antes do fim não libere o salvamento
+    let recompensaConquistada = false; // Indica se o Google confirmou a visualização completa do vídeo
+    let callbackExecutado = false; // Evita executar a geração da trilha duas vezes
 
-    // Escuta o evento oficial do Google que confirma a conclusão do vídeo
+    const concluirRecompensa = () => {
+      if (recompensaConquistada && !callbackExecutado) {
+        callbackExecutado = true;
+        if (aoConquistarRecompensa) aoConquistarRecompensa();
+      }
+    };
+
+    // Escuta o evento oficial do Google que confirma a conclusão dos 30 segundos
     const cancelarRecompensa = premiado.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
       recompensaConquistada = true;
     });
 
-    // Quando o modal do vídeo fecha, verifica se a recompensa foi validada
+    // Quando o usuário fecha o player do vídeo, libera a recompensa se ela foi conquistada
     const cancelarFechamento = premiado.addAdEventListener(AdEventType.CLOSED, () => {
       cancelarRecompensa();
       cancelarFechamento();
-      if (recompensaConquistada && aoConquistarRecompensa) {
-        aoConquistarRecompensa();
-      }
+      // Pequeno atraso de 150ms garante que EARNED_REWARD seja processado mesmo se chegar junto com CLOSED
+      setTimeout(concluirRecompensa, 150);
     });
 
     premiado.show();
   };
+
 
   return { exibirAnuncioPremiado, premiadoCarregado: carregado };
 }
